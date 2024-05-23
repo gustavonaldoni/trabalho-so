@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #define VITORIA 4
 
@@ -25,17 +27,6 @@ int jogar(int, int);
 int ganhou_horizontal(int);
 int ganhou_vertical(int);
 int ganhou_diagonal(int);
-
-int main()
-{
-    mostrar_tabuleiro();
-
-    printf("\n");
-
-    printf("%d ", ganhou_diagonal(P2));
-
-    return 0;
-}
 
 void limpar_tela()
 {
@@ -274,4 +265,25 @@ int ganhou_diagonal(int codigo_pessoa)
     }
 
     return 0;
+}
+
+int main()
+{
+    mostrar_tabuleiro();
+
+    printf("\n");
+
+    printf("%d ", ganhou_diagonal(P2));
+
+    return 0;
+}
+
+void player1()
+{
+
+}
+
+void player2()
+{
+
 }
