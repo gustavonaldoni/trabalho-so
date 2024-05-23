@@ -83,7 +83,7 @@ int atualizar_tabuleiro(int numero_linha, int numero_coluna, int codigo_jogador)
 int jogar(int numero_coluna, int codigo_jogador)
 {
     int i = 0;
-    
+
     for (i = 0; i < LINHAS; i++)
     {
         // A coluna inteira está ocupada
@@ -103,7 +103,6 @@ int jogar(int numero_coluna, int codigo_jogador)
             atualizar_tabuleiro(i, numero_coluna, codigo_jogador);
             return 1;
         }
-
     }
 
     return 1;
@@ -125,7 +124,7 @@ int ganhou_horizontal(int codigo_pessoa)
                 if (contador == VITORIA)
                     return 1;
             }
-                
+
             else
                 contador = 0;
         }
@@ -134,7 +133,6 @@ int ganhou_horizontal(int codigo_pessoa)
     }
 
     return 0;
-
 }
 
 int ganhou_vertical(int codigo_pessoa)
@@ -153,7 +151,7 @@ int ganhou_vertical(int codigo_pessoa)
                 if (contador == VITORIA)
                     return 1;
             }
-                
+
             else
                 contador = 0;
         }
@@ -161,10 +159,64 @@ int ganhou_vertical(int codigo_pessoa)
         contador = 0;
     }
 
-    return 0; 
+    return 0;
 }
 
 int ganhou_diagonal(int codigo_pessoa)
 {
+    int coluna_original;
+    int i, j;
+    int contador = 0;
+
+    // Diagonal cima pra baixo
+    for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
+    {
+        while (i >= 0 || j >= 0)
+        {
+            j = coluna_original;
+            i = LINHAS - 1;
+
+            if (tabuleiro[i][j] == codigo_pessoa)
+            {
+                contador++;
+
+                if (contador == VITORIA)
+                    return 1;
+            }
+            else
+                contador = 0;
+
+            j--;
+            i--;
+        }
+
+        contador = 0;
+    }
+
+    // Diagonal baixo pra cima
+    for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
+    {
+        while (i >= 0 || j >= 0)
+        {
+            j = coluna_original;
+            i = 0;
+
+            if (tabuleiro[i][j] == codigo_pessoa)
+            {
+                contador++;
+
+                if (contador == VITORIA)
+                    return 1;
+            }
+            else
+                contador = 0;
+
+            j--;
+            i++;
+        }
+
+        contador = 0;
+    }
+
     return 0;
 }
