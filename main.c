@@ -32,7 +32,7 @@ int main()
 
     printf("\n");
 
-    printf("%d ", ganhou_diagonal(P1));
+    printf("%d ", ganhou_diagonal(P2));
 
     return 0;
 }
@@ -185,12 +185,42 @@ int ganhou_diagonal(int codigo_pessoa)
     // Diagonal baixo pra cima
     for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
     {
-        printf("coluna_original = %d\n", coluna_original);
+        // printf("coluna_original = %d\n", coluna_original);
 
         j = coluna_original;
         i = 0;
 
         while (i >= 0 && j >= 0)
+        {
+            // printf("i = %d\n", i);
+            // printf("j = %d\n", j);
+
+            if (tabuleiro[i][j] == codigo_pessoa)
+            {
+                contador++;
+                // printf("contador = %d\n", contador);
+
+                if (contador == VITORIA)
+                    return 1;
+            }
+            else
+                contador = 0;
+
+            j--;
+            i++;
+        }
+
+        contador = 0;
+    }
+
+    for (coluna_original = COLUNAS - 1; coluna_original >= 0; coluna_original--)
+    {
+        printf("coluna_original = %d\n", coluna_original);
+
+        j = coluna_original;
+        i = LINHAS - 1;
+
+        while (i >= 0 && j <= COLUNAS - 1)
         {
             printf("i = %d\n", i);
             printf("j = %d\n", j);
@@ -206,8 +236,8 @@ int ganhou_diagonal(int codigo_pessoa)
             else
                 contador = 0;
 
-            j--;
-            i++;
+            j++;
+            i--;
         }
 
         contador = 0;
