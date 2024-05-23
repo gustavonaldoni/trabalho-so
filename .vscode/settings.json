@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "jogador.h": "c",
+        "tabuleiro.h": "c"
+    }
+}
