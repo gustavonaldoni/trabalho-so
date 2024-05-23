@@ -9,7 +9,12 @@
 #define P1 1
 #define P2 2
 
-int tabuleiro[LINHAS][COLUNAS] = {0};
+int tabuleiro[LINHAS][COLUNAS] = {{0, 0, 0, 0, 0, 0, 0},
+                                  {0, 0, 0, 0, 0, 0, 2},
+                                  {0, 1, 1, 0, 0, 2, 0},
+                                  {0, 0, 1, 2, 2, 0, 0},
+                                  {0, 0, 2, 2, 1, 0, 0},
+                                  {0, 2, 1, 2, 2, 1, 0}};
 
 void limpar_tela();
 
@@ -25,31 +30,9 @@ int main()
 {
     mostrar_tabuleiro();
 
-    jogar(0, P1);
-    jogar(1, P2);
-
-    jogar(2, P1);
-    jogar(3, P2);
-
-    jogar(4, P1);
-    jogar(5, P2);
-
-    jogar(6, P1);
-    jogar(0, P2);
-
-    jogar(1, P1);
-    jogar(2, P1);
-    jogar(3, P1);
-    jogar(4, P1);
-
     printf("\n");
 
-    mostrar_tabuleiro();
-
-    printf("\n");
-
-    printf("%d", ganhou_vertical(P1));
-    printf("%d", ganhou_horizontal(P1));
+    printf("%d ", ganhou_diagonal(P1));
 
     return 0;
 }
@@ -171,14 +154,20 @@ int ganhou_diagonal(int codigo_pessoa)
     // Diagonal cima pra baixo
     for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
     {
-        while (i >= 0 || j >= 0)
+        // printf("coluna_original = %d\n", coluna_original);
+
+        j = coluna_original;
+        i = LINHAS - 1;
+
+        while (i >= 0 && j >= 0)
         {
-            j = coluna_original;
-            i = LINHAS - 1;
+            // printf("i = %d\n", i);
+            // printf("j = %d\n", j);
 
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
+                // printf("contador = %d\n", contador);
 
                 if (contador == VITORIA)
                     return 1;
@@ -196,14 +185,20 @@ int ganhou_diagonal(int codigo_pessoa)
     // Diagonal baixo pra cima
     for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
     {
-        while (i >= 0 || j >= 0)
+        printf("coluna_original = %d\n", coluna_original);
+
+        j = coluna_original;
+        i = 0;
+
+        while (i >= 0 && j >= 0)
         {
-            j = coluna_original;
-            i = 0;
+            printf("i = %d\n", i);
+            printf("j = %d\n", j);
 
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
+                printf("contador = %d\n", contador);
 
                 if (contador == VITORIA)
                     return 1;
