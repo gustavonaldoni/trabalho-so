@@ -9,10 +9,10 @@
 #define P1 1
 #define P2 2
 
-int tabuleiro[LINHAS][COLUNAS] = {{0, 0, 0, 0, 0, 0, 0},
-                                  {0, 0, 0, 0, 0, 0, 2},
+int tabuleiro[LINHAS][COLUNAS] = {{0, 0, 0, 2, 0, 0, 0},
+                                  {0, 0, 0, 0, 2, 0, 2},
                                   {0, 1, 1, 0, 0, 2, 0},
-                                  {0, 0, 1, 2, 2, 0, 0},
+                                  {0, 0, 1, 2, 1, 0, 2},
                                   {0, 0, 2, 2, 1, 0, 0},
                                   {0, 2, 1, 2, 2, 1, 0}};
 
@@ -182,6 +182,36 @@ int ganhou_diagonal(int codigo_pessoa)
         contador = 0;
     }
 
+    for (coluna_original = COLUNAS - 1; coluna_original >= 0; coluna_original--)
+    {
+        printf("coluna_original = %d\n", coluna_original);
+
+        j = coluna_original;
+        i = 0;
+
+        while (i < LINHAS && j < COLUNAS)
+        {
+            printf("i = %d\n", i);
+            printf("j = %d\n", j);
+
+            if (tabuleiro[i][j] == codigo_pessoa)
+            {
+                contador++;
+                printf("contador = %d\n", contador);
+
+                if (contador == VITORIA)
+                    return 1;
+            }
+            else
+                contador = 0;
+
+            j++;
+            i++;
+        }
+
+        contador = 0;
+    }
+
     // Diagonal baixo pra cima
     for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
     {
@@ -215,20 +245,20 @@ int ganhou_diagonal(int codigo_pessoa)
 
     for (coluna_original = COLUNAS - 1; coluna_original >= 0; coluna_original--)
     {
-        printf("coluna_original = %d\n", coluna_original);
+        // printf("coluna_original = %d\n", coluna_original);
 
         j = coluna_original;
         i = LINHAS - 1;
 
         while (i >= 0 && j <= COLUNAS - 1)
         {
-            printf("i = %d\n", i);
-            printf("j = %d\n", j);
+            // printf("i = %d\n", i);
+            // printf("j = %d\n", j);
 
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-                printf("contador = %d\n", contador);
+                // printf("contador = %d\n", contador);
 
                 if (contador == VITORIA)
                     return 1;
