@@ -2,7 +2,7 @@ EXECUTABLE_NAME = main.out
 SOURCE_FILE = main.c
 
 CC = cc
-CFLAGS = -Wall
+CFLAGS = -Wall -Werror
 
 ALL_FLAGS = $(CFLAGS)
 

@@ -173,20 +173,20 @@ int ganhou_diagonal(int codigo_pessoa)
 
     for (coluna_original = COLUNAS - 1; coluna_original >= 0; coluna_original--)
     {
-        printf("coluna_original = %d\n", coluna_original);
+        // printf("coluna_original = %d\n", coluna_original);
 
         j = coluna_original;
         i = 0;
 
         while (i < LINHAS && j < COLUNAS)
         {
-            printf("i = %d\n", i);
-            printf("j = %d\n", j);
+            // printf("i = %d\n", i);
+            // printf("j = %d\n", j);
 
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-                printf("contador = %d\n", contador);
+                // printf("contador = %d\n", contador);
 
                 if (contador == VITORIA)
                     return 1;
@@ -265,17 +265,22 @@ int ganhou_diagonal(int codigo_pessoa)
     return 0;
 }
 
+int ganhou(int codigo_pessoa)
+{
+    return (ganhou_diagonal(codigo_pessoa) || ganhou_vertical(codigo_pessoa) || ganhou_diagonal(codigo_pessoa));
+}
+
 int main()
 {
     pid_t pid;
 
-    int pipe_pai_filho[2] = {0},
-        pipe_filho_pai[2] = {0};
+    int pipe1[2] = {0},
+        pipe2[2] = {0};
 
     int numero_coluna_pai = 0,
         numero_coluna_filho = 0;
 
-    if (pipe(pipe_pai_filho) == -1 || pipe(pipe_pai_filho) == -1)
+    if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
     {
         perror("Erro pipe");
         exit(EXIT_FAILURE);
@@ -289,34 +294,68 @@ int main()
     if (pid > 0)
     {
         // Processo PAI = Player1
-        printf("PAI AQUI\n");
+        close(pipe1[PIPE_READ]);
+        close(pipe2[PIPE_WRITE]);
 
-        close(pipe_pai_filho[PIPE_READ]);
-        close(pipe_filho_pai[PIPE_WRITE]);
+        while (1)
+        {
+            limpar_tela();
+            printf("PROCESSO PAI!!!\n\n");
+            mostrar_tabuleiro();
 
-        numero_coluna_pai = 33;
+            printf("Jogada (1) = ");
+            scanf("%d", &numero_coluna_pai);
 
-        printf("n1 = %d\n", numero_coluna_pai);
-        write(pipe_pai_filho[PIPE_WRITE], &numero_coluna_pai, sizeof(numero_coluna_pai));
+            jogar(numero_coluna_pai, P1);
 
-        close(pipe_pai_filho[PIPE_WRITE]);
-        close(pipe_filho_pai[PIPE_READ]);
+            if (ganhou(P1))
+            {
+                printf("Jogador 1 GANHOU!!\n");
+                exit(EXIT_SUCCESS);
+            }
+
+            write(pipe1[PIPE_WRITE], &numero_coluna_pai, sizeof(numero_coluna_pai));
+            printf("VOLTEI PRO PAI!\n\n");
+
+            read(pipe2[PIPE_READ], &numero_coluna_pai, sizeof(numero_coluna_pai));
+            jogar(numero_coluna_pai, P2);
+        }
+
+        close(pipe1[PIPE_WRITE]);
+        close(pipe2[PIPE_READ]);
     }
 
     else if (pid == 0)
     {
         // Processo FILHO = Player2
-        printf("FILHO AQUI\n");
+        close(pipe1[PIPE_WRITE]);
+        close(pipe2[PIPE_READ]);
 
-        close(pipe_pai_filho[PIPE_WRITE]);
-        close(pipe_filho_pai[PIPE_READ]);
+        while (1)
+        {
+            read(pipe1[PIPE_READ], &numero_coluna_filho, sizeof(numero_coluna_filho));
+            jogar(numero_coluna_filho, P1);
 
-        read(pipe_pai_filho[PIPE_READ], &numero_coluna_filho, sizeof(numero_coluna_filho));
-        
-        printf("n2 = %d\n", numero_coluna_filho);
+            limpar_tela();
+            printf("PROCESSO FILHO!!!\n\n");
+            mostrar_tabuleiro();
 
-        close(pipe_pai_filho[PIPE_READ]);
-        close(pipe_filho_pai[PIPE_WRITE]);
+            printf("Jogada (2) = ");
+            scanf("%d", &numero_coluna_filho);
+
+            jogar(numero_coluna_filho, P2);
+
+            if (ganhou(P2))
+            {
+                printf("Jogador 2 GANHOU!!\n");
+                exit(EXIT_SUCCESS);
+            }
+
+            write(pipe2[PIPE_WRITE], &numero_coluna_filho, sizeof(numero_coluna_filho));
+        }
+
+        close(pipe1[PIPE_READ]);
+        close(pipe2[PIPE_WRITE]);
     }
 
     return 0;
