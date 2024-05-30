@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #define PIPE_READ 0
 #define PIPE_WRITE 1
@@ -17,7 +18,6 @@
 int tabuleiro[LINHAS][COLUNAS] = {0};
 
 void limpar_tela();
-
 void mostrar_tabuleiro();
 int atualizar_tabuleiro(int, int, int);
 int jogar(int, int);
@@ -41,7 +41,6 @@ void mostrar_tabuleiro()
         {
             printf("%d ", tabuleiro[i][j]);
         }
-
         printf("\n");
     }
 }
@@ -55,6 +54,9 @@ int atualizar_tabuleiro(int numero_linha, int numero_coluna, int codigo_jogador)
 int jogar(int numero_coluna, int codigo_jogador)
 {
     int i = 0;
+
+    if (numero_coluna < 0 || numero_coluna > COLUNAS - 1)
+        return -1;
 
     for (i = 0; i < LINHAS; i++)
     {
@@ -92,18 +94,14 @@ int ganhou_horizontal(int codigo_pessoa)
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-
                 if (contador == VITORIA)
                     return 1;
             }
-
             else
                 contador = 0;
         }
-
         contador = 0;
     }
-
     return 0;
 }
 
@@ -119,18 +117,14 @@ int ganhou_vertical(int codigo_pessoa)
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-
                 if (contador == VITORIA)
                     return 1;
             }
-
             else
                 contador = 0;
         }
-
         contador = 0;
     }
-
     return 0;
 }
 
@@ -143,125 +137,84 @@ int ganhou_diagonal(int codigo_pessoa)
     // Diagonal cima pra baixo
     for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
     {
-        // printf("coluna_original = %d\n", coluna_original);
-
         j = coluna_original;
         i = LINHAS - 1;
-
         while (i >= 0 && j >= 0)
         {
-            // printf("i = %d\n", i);
-            // printf("j = %d\n", j);
-
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-                // printf("contador = %d\n", contador);
-
                 if (contador == VITORIA)
                     return 1;
             }
             else
                 contador = 0;
-
             j--;
             i--;
         }
-
         contador = 0;
     }
 
     for (coluna_original = COLUNAS - 1; coluna_original >= 0; coluna_original--)
     {
-        // printf("coluna_original = %d\n", coluna_original);
-
         j = coluna_original;
         i = 0;
-
         while (i < LINHAS && j < COLUNAS)
         {
-            // printf("i = %d\n", i);
-            // printf("j = %d\n", j);
-
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-                // printf("contador = %d\n", contador);
-
                 if (contador == VITORIA)
                     return 1;
             }
             else
                 contador = 0;
-
             j++;
             i++;
         }
-
         contador = 0;
     }
 
     // Diagonal baixo pra cima
     for (coluna_original = 0; coluna_original < COLUNAS; coluna_original++)
     {
-        // printf("coluna_original = %d\n", coluna_original);
-
         j = coluna_original;
         i = 0;
-
         while (i >= 0 && j >= 0)
         {
-            // printf("i = %d\n", i);
-            // printf("j = %d\n", j);
-
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-                // printf("contador = %d\n", contador);
-
                 if (contador == VITORIA)
                     return 1;
             }
             else
                 contador = 0;
-
             j--;
             i++;
         }
-
         contador = 0;
     }
 
     for (coluna_original = COLUNAS - 1; coluna_original >= 0; coluna_original--)
     {
-        // printf("coluna_original = %d\n", coluna_original);
-
         j = coluna_original;
         i = LINHAS - 1;
-
         while (i >= 0 && j <= COLUNAS - 1)
         {
-            // printf("i = %d\n", i);
-            // printf("j = %d\n", j);
-
             if (tabuleiro[i][j] == codigo_pessoa)
             {
                 contador++;
-                // printf("contador = %d\n", contador);
-
                 if (contador == VITORIA)
                     return 1;
             }
             else
                 contador = 0;
-
             j++;
             i--;
         }
-
         contador = 0;
     }
-
     return 0;
 }
 
@@ -269,20 +222,16 @@ int ganhou(int codigo_pessoa)
 {
     if (ganhou_diagonal(codigo_pessoa))
         return 1;
-
     if (ganhou_horizontal(codigo_pessoa))
         return 1;
-
     if (ganhou_vertical(codigo_pessoa))
         return 1;
-
     return 0;
 }
 
 void player1(int read_fd, int write_fd)
 {
     int buffer_jogada;
-
     while (1)
     {
         limpar_tela();
@@ -292,16 +241,29 @@ void player1(int read_fd, int write_fd)
         printf("Jogada (1) = ");
         scanf("%d", &buffer_jogada);
 
-        jogar(buffer_jogada - 1, P1);
+        if (jogar(buffer_jogada - 1, P1) == -1)
+        {
+            printf("Jogada inválida! Tente novamente.\n");
+            continue;
+        }
 
         if (ganhou(P1))
         {
             printf("Jogador 1 GANHOU!!\n");
+            write(write_fd, &buffer_jogada, sizeof(buffer_jogada)); // Notificar o filho
             exit(EXIT_SUCCESS);
         }
 
-        write(write_fd, &buffer_jogada, sizeof(buffer_jogada));
-        read(read_fd, &buffer_jogada, sizeof(buffer_jogada));
+        if (write(write_fd, &buffer_jogada, sizeof(buffer_jogada)) == -1)
+        {
+            perror("Erro ao escrever no pipe");
+            exit(EXIT_FAILURE);
+        }
+        if (read(read_fd, &buffer_jogada, sizeof(buffer_jogada)) == -1)
+        {
+            perror("Erro ao ler do pipe");
+            exit(EXIT_FAILURE);
+        }
 
         jogar(buffer_jogada - 1, P2);
     }
@@ -310,10 +272,13 @@ void player1(int read_fd, int write_fd)
 void player2(int read_fd, int write_fd)
 {
     int buffer_jogada;
-
     while (1)
     {
-        read(read_fd, &buffer_jogada, sizeof(buffer_jogada));
+        if (read(read_fd, &buffer_jogada, sizeof(buffer_jogada)) == -1)
+        {
+            perror("Erro ao ler do pipe");
+            exit(EXIT_FAILURE);
+        }
 
         jogar(buffer_jogada - 1, P1);
 
@@ -324,35 +289,45 @@ void player2(int read_fd, int write_fd)
         printf("Jogada (2) = ");
         scanf("%d", &buffer_jogada);
 
-        jogar(buffer_jogada - 1, P2);
+        if (jogar(buffer_jogada - 1, P2) == -1)
+        {
+            printf("Jogada inválida! Tente novamente.\n");
+            continue;
+        }
 
         if (ganhou(P2))
         {
             printf("Jogador 2 GANHOU!!\n");
+            write(write_fd, &buffer_jogada, sizeof(buffer_jogada)); // Notificar o pai
             exit(EXIT_SUCCESS);
         }
 
-        write(write_fd, &buffer_jogada, sizeof(buffer_jogada));
+        if (write(write_fd, &buffer_jogada, sizeof(buffer_jogada)) == -1)
+        {
+            perror("Erro ao escrever no pipe");
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
 int main()
 {
     pid_t pid;
-
-    int pipe1[2] = {0},
-        pipe2[2] = {0};
+    int pipe1[2] = {0}, pipe2[2] = {0};
 
     if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
     {
         perror("Erro pipe");
         exit(EXIT_FAILURE);
-    };
+    }
 
     pid = fork();
 
     if (pid == -1)
+    {
+        perror("Erro fork");
         exit(EXIT_FAILURE);
+    }
 
     if (pid > 0)
     {
@@ -364,8 +339,10 @@ int main()
 
         close(pipe1[PIPE_WRITE]);
         close(pipe2[PIPE_READ]);
-    }
 
+        // Espera pelo processo filho terminar
+        wait(NULL);
+    }
     else if (pid == 0)
     {
         // Processo FILHO = Player2
