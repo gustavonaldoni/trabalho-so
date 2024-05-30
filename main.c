@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#define PIPE_READ 0
+#define PIPE_WRITE 1
+
 #define VITORIA 4
 
 #define LINHAS 6
@@ -11,12 +14,7 @@
 #define P1 1
 #define P2 2
 
-int tabuleiro[LINHAS][COLUNAS] = {{0, 0, 0, 2, 0, 0, 0},
-                                  {0, 0, 0, 0, 2, 0, 2},
-                                  {0, 1, 1, 0, 0, 2, 0},
-                                  {0, 0, 1, 2, 1, 0, 2},
-                                  {0, 0, 2, 2, 1, 0, 0},
-                                  {0, 2, 1, 2, 2, 1, 0}};
+int tabuleiro[LINHAS][COLUNAS] = {0};
 
 void limpar_tela();
 
@@ -269,21 +267,43 @@ int ganhou_diagonal(int codigo_pessoa)
 
 int main()
 {
-    mostrar_tabuleiro();
+    pid_t pid;
 
-    printf("\n");
+    int pipe[2];
 
-    printf("%d ", ganhou_diagonal(P2));
+    int n1[1] = {0},
+        n2[1] = {0};
+
+    pid = fork();
+
+    if (pid == -1)
+        exit(EXIT_FAILURE);
+
+    if (pid > 0)
+    {
+        // Processo PAI = Player1
+        printf("PAI AQUI\n");
+
+        close(pipe[PIPE_READ]);
+
+        n1[0] = 33;
+
+        printf("n1 = %d\n", n1[0]);
+        write(pipe[PIPE_WRITE], n1, sizeof(n1));
+    }
+
+    else if (pid == 0)
+    {
+        // Processo FILHO = Player2
+        printf("FILHO AQUI\n");
+
+        close(pipe[PIPE_WRITE]);
+
+        while (n2[0] == 0)
+            read(pipe[PIPE_READ], n2, sizeof(n2));
+        
+        printf("n2 = %d\n", n2[0]);
+    }
 
     return 0;
-}
-
-void player1()
-{
-
-}
-
-void player2()
-{
-
 }
