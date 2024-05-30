@@ -269,10 +269,17 @@ int main()
 {
     pid_t pid;
 
-    int pipe[2];
+    int pipe_pai_filho[2] = {0},
+        pipe_filho_pai[2] = {0};
 
-    int n1[1] = {0},
-        n2[1] = {0};
+    int numero_coluna_pai = 0,
+        numero_coluna_filho = 0;
+
+    if (pipe(pipe_pai_filho) == -1 || pipe(pipe_pai_filho) == -1)
+    {
+        perror("Erro pipe");
+        exit(EXIT_FAILURE);
+    };
 
     pid = fork();
 
@@ -284,12 +291,16 @@ int main()
         // Processo PAI = Player1
         printf("PAI AQUI\n");
 
-        close(pipe[PIPE_READ]);
+        close(pipe_pai_filho[PIPE_READ]);
+        close(pipe_filho_pai[PIPE_WRITE]);
 
-        n1[0] = 33;
+        numero_coluna_pai = 33;
 
-        printf("n1 = %d\n", n1[0]);
-        write(pipe[PIPE_WRITE], n1, sizeof(n1));
+        printf("n1 = %d\n", numero_coluna_pai);
+        write(pipe_pai_filho[PIPE_WRITE], &numero_coluna_pai, sizeof(numero_coluna_pai));
+
+        close(pipe_pai_filho[PIPE_WRITE]);
+        close(pipe_filho_pai[PIPE_READ]);
     }
 
     else if (pid == 0)
@@ -297,12 +308,15 @@ int main()
         // Processo FILHO = Player2
         printf("FILHO AQUI\n");
 
-        close(pipe[PIPE_WRITE]);
+        close(pipe_pai_filho[PIPE_WRITE]);
+        close(pipe_filho_pai[PIPE_READ]);
 
-        while (n2[0] == 0)
-            read(pipe[PIPE_READ], n2, sizeof(n2));
+        read(pipe_pai_filho[PIPE_READ], &numero_coluna_filho, sizeof(numero_coluna_filho));
         
-        printf("n2 = %d\n", n2[0]);
+        printf("n2 = %d\n", numero_coluna_filho);
+
+        close(pipe_pai_filho[PIPE_READ]);
+        close(pipe_filho_pai[PIPE_WRITE]);
     }
 
     return 0;
