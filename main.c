@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -16,6 +17,9 @@
 #define P2 2
 
 int tabuleiro[LINHAS][COLUNAS] = {0};
+int jogo_terminou = 0;
+int tempo_total = 0;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void limpar_tela();
 void mostrar_tabuleiro();
@@ -57,9 +61,7 @@ void mostrar_tabuleiro()
     for (i = 0; i < COLUNAS; i++)
         printf("%d ", i + 1);
 
-    printf(" <- coordenadas");
-
-    printf("\n");
+    printf(" <- coordenadas\n");
 }
 
 int atualizar_tabuleiro(int numero_linha, int numero_coluna, int codigo_jogador)
@@ -243,6 +245,7 @@ int ganhou(int codigo_pessoa)
         return 1;
     if (ganhou_vertical(codigo_pessoa))
         return 1;
+
     return 0;
 }
 
@@ -259,7 +262,7 @@ void player1(int read_fd, int write_fd)
 
         do
         {
-            printf("\n\nJogada (1) = ");
+            printf("\n\nJogada (1): ");
             scanf("%d", &buffer_jogada);
 
             resultado_jogada = jogar(buffer_jogada - 1, P1);
@@ -272,6 +275,9 @@ void player1(int read_fd, int write_fd)
         if (ganhou(P1))
         {
             write(write_fd, &buffer_jogada, sizeof(buffer_jogada)); // Notificar o filho
+            pthread_mutex_lock(&mutex);
+            jogo_terminou = 1;
+            pthread_mutex_unlock(&mutex);
             exit(EXIT_SUCCESS);
         }
 
@@ -296,7 +302,10 @@ void player1(int read_fd, int write_fd)
             mostrar_tabuleiro();
 
             printf("Jogador 2 GANHOU!!\n");
-            exit(EXIT_SUCCESS);
+            pthread_mutex_lock(&mutex);
+            jogo_terminou = 1;
+            pthread_mutex_unlock(&mutex);
+            return;
         }
     }
 }
@@ -323,7 +332,10 @@ void player2(int read_fd, int write_fd)
             mostrar_tabuleiro();
 
             printf("Jogador 1 GANHOU!!\n");
-            exit(EXIT_SUCCESS);
+            pthread_mutex_lock(&mutex);
+            jogo_terminou = 1;
+            pthread_mutex_unlock(&mutex);
+            return;
         }
 
         limpar_tela();
@@ -332,7 +344,7 @@ void player2(int read_fd, int write_fd)
 
         do
         {
-            printf("\n\nJogada (2) = ");
+            printf("\n\nJogada (2): ");
             scanf("%d", &buffer_jogada);
 
             resultado_jogada = jogar(buffer_jogada - 1, P2);
@@ -345,6 +357,9 @@ void player2(int read_fd, int write_fd)
         if (ganhou(P2))
         {
             write(write_fd, &buffer_jogada, sizeof(buffer_jogada)); // Notificar o pai
+            pthread_mutex_lock(&mutex);
+            jogo_terminou = 1;
+            pthread_mutex_unlock(&mutex);
             exit(EXIT_SUCCESS);
         }
 
@@ -356,10 +371,32 @@ void player2(int read_fd, int write_fd)
     }
 }
 
+void *incrementar_tempo(void *arg)
+{
+    int *time = (int *)arg;
+
+    while (1)
+    {
+        pthread_mutex_lock(&mutex);
+        if (jogo_terminou)
+        {
+            pthread_mutex_unlock(&mutex);
+            break;
+        }
+        pthread_mutex_unlock(&mutex);
+        sleep(1);
+        (*time)++;
+    }
+
+    return NULL;
+}
+
 int main()
 {
     pid_t pid;
     int pipe1[2] = {0}, pipe2[2] = {0};
+
+    pthread_t thread1;
 
     if (pipe(pipe1) == -1 || pipe(pipe2) == -1)
     {
@@ -368,6 +405,8 @@ int main()
     }
 
     pid = fork();
+
+    pthread_create(&thread1, NULL, &incrementar_tempo, &tempo_total);
 
     if (pid == -1)
     {
@@ -400,6 +439,14 @@ int main()
         close(pipe1[PIPE_READ]);
         close(pipe2[PIPE_WRITE]);
     }
+
+    pthread_mutex_lock(&mutex);
+    jogo_terminou = 1;
+    pthread_mutex_unlock(&mutex);
+
+    pthread_join(thread1, NULL);
+
+    printf("\n\nTempo total da partida: %d s\n", tempo_total);
 
     return 0;
 }
