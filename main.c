@@ -287,16 +287,17 @@ void player1(int read_fd, int write_fd)
             exit(EXIT_FAILURE);
         }
 
-        else
-        {
-            if (ganhou(P2))
-            {
-                printf("Jogador 2 GANHOU!!\n");
-                exit(EXIT_SUCCESS);
-            }
-        }
-
         jogar(buffer_jogada - 1, P2);
+
+        if (ganhou(P2))
+        {
+            limpar_tela();
+            printf("GAME OVER!!!\n\n");
+            mostrar_tabuleiro();
+
+            printf("Jogador 2 GANHOU!!\n");
+            exit(EXIT_SUCCESS);
+        }
     }
 }
 
@@ -313,16 +314,17 @@ void player2(int read_fd, int write_fd)
             exit(EXIT_FAILURE);
         }
 
-        else
-        {
-            if (ganhou(P1))
-            {
-                printf("Jogador 1 GANHOU!!\n");
-                exit(EXIT_SUCCESS);
-            }
-        }
-
         jogar(buffer_jogada - 1, P1);
+
+        if (ganhou(P1))
+        {
+            limpar_tela();
+            printf("GAME OVER!!!\n\n");
+            mostrar_tabuleiro();
+
+            printf("Jogador 1 GANHOU!!\n");
+            exit(EXIT_SUCCESS);
+        }
 
         limpar_tela();
         printf("Vez do Jogador 2!\n\n");
