@@ -43,6 +43,23 @@ void mostrar_tabuleiro()
         }
         printf("\n");
     }
+
+    for (i = 0; i < COLUNAS; i++)
+    {
+        if (i != COLUNAS - 1)
+            printf("--");
+        else
+            printf("-");
+    }
+
+    printf("\n");
+
+    for (i = 0; i < COLUNAS; i++)
+        printf("%d ", i + 1);
+
+    printf(" <- coordenadas");
+
+    printf("\n");
 }
 
 int atualizar_tabuleiro(int numero_linha, int numero_coluna, int codigo_jogador)
@@ -232,24 +249,28 @@ int ganhou(int codigo_pessoa)
 void player1(int read_fd, int write_fd)
 {
     int buffer_jogada;
+    int resultado_jogada;
+
     while (1)
     {
         limpar_tela();
-        printf("PROCESSO PAI!!!\n\n");
+        printf("Vez do Jogador 1!\n\n");
         mostrar_tabuleiro();
 
-        printf("Jogada (1) = ");
-        scanf("%d", &buffer_jogada);
-
-        if (jogar(buffer_jogada - 1, P1) == -1)
+        do
         {
-            printf("Jogada inválida! Tente novamente.\n");
-            continue;
-        }
+            printf("\n\nJogada (1) = ");
+            scanf("%d", &buffer_jogada);
+
+            resultado_jogada = jogar(buffer_jogada - 1, P1);
+
+            if (resultado_jogada == -1)
+                printf("JOGADA INVÁLIDA!! Tente novamente.");
+
+        } while (resultado_jogada == -1);
 
         if (ganhou(P1))
         {
-            printf("Jogador 1 GANHOU!!\n");
             write(write_fd, &buffer_jogada, sizeof(buffer_jogada)); // Notificar o filho
             exit(EXIT_SUCCESS);
         }
@@ -259,10 +280,20 @@ void player1(int read_fd, int write_fd)
             perror("Erro ao escrever no pipe");
             exit(EXIT_FAILURE);
         }
+
         if (read(read_fd, &buffer_jogada, sizeof(buffer_jogada)) == -1)
         {
             perror("Erro ao ler do pipe");
             exit(EXIT_FAILURE);
+        }
+
+        else
+        {
+            if (ganhou(P2))
+            {
+                printf("Jogador 2 GANHOU!!\n");
+                exit(EXIT_SUCCESS);
+            }
         }
 
         jogar(buffer_jogada - 1, P2);
@@ -272,6 +303,8 @@ void player1(int read_fd, int write_fd)
 void player2(int read_fd, int write_fd)
 {
     int buffer_jogada;
+    int resultado_jogada;
+
     while (1)
     {
         if (read(read_fd, &buffer_jogada, sizeof(buffer_jogada)) == -1)
@@ -280,24 +313,35 @@ void player2(int read_fd, int write_fd)
             exit(EXIT_FAILURE);
         }
 
+        else
+        {
+            if (ganhou(P1))
+            {
+                printf("Jogador 1 GANHOU!!\n");
+                exit(EXIT_SUCCESS);
+            }
+        }
+
         jogar(buffer_jogada - 1, P1);
 
         limpar_tela();
-        printf("PROCESSO FILHO!!!\n\n");
+        printf("Vez do Jogador 2!\n\n");
         mostrar_tabuleiro();
 
-        printf("Jogada (2) = ");
-        scanf("%d", &buffer_jogada);
-
-        if (jogar(buffer_jogada - 1, P2) == -1)
+        do
         {
-            printf("Jogada inválida! Tente novamente.\n");
-            continue;
-        }
+            printf("\n\nJogada (2) = ");
+            scanf("%d", &buffer_jogada);
+
+            resultado_jogada = jogar(buffer_jogada - 1, P2);
+
+            if (resultado_jogada == -1)
+                printf("JOGADA INVÁLIDA!! Tente novamente.");
+
+        } while (resultado_jogada == -1);
 
         if (ganhou(P2))
         {
-            printf("Jogador 2 GANHOU!!\n");
             write(write_fd, &buffer_jogada, sizeof(buffer_jogada)); // Notificar o pai
             exit(EXIT_SUCCESS);
         }
